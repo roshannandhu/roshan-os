@@ -1,0 +1,29 @@
+--- cctv-health-check-fixed.sh
++++ cctv-health-check-fixed.sh
+@@
+ start_ip_webcam
+ RESULT=$?
+-if [ "$RESULT" -eq  ]; then
+-    log "Recovery: successful"
+-    am start -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null
+-    sleep 7
+-    if partial_health_check; then turn_screen_off; fi
+-else log "Recovery: FAILED"; fi
++case "$RESULT" in
++    0)
++        log "Recovery: SUCCESS"
++        am start -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null
++        sleep 7
++        if partial_health_check; then turn_screen_off; fi
++        ;;
++    '')
++        log "Recovery: INVALID_RESULT"
++        ;;
++    *[!0-9]*)
++        log "Recovery: INVALID_RESULT"
++        ;;
++    *)
++        log "Recovery: FAILED"
++        ;;
++esac
+ log "=== HEALTH CHECK COMPLETED ==="

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+<title>ROSHAN CYBERDECK</title>
+<style>
+  :root{ --neon:#00ff9c; --dim:#0a3d2c; --bg:#03060a; --amber:#ffb454; --red:#ff4d5e; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:var(--bg); color:var(--neon);
+    font-family:"Consolas","Courier New",monospace; overflow:hidden; }
+  #matrix{ position:fixed; inset:0; z-index:0; opacity:.25; }
+  .wrap{ position:relative; z-index:1; height:100%; display:flex; flex-direction:column;
+    padding:14px 18px; gap:12px; }
+  .hdr{ display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:1px solid var(--dim); padding-bottom:8px; }
+  .hdr h1{ font-size:22px; letter-spacing:4px; text-shadow:0 0 8px var(--neon); }
+  .hdr .clock{ color:var(--amber); font-size:14px; }
+  .panel{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .card{ border:1px solid var(--dim); background:rgba(0,255,156,.03); padding:10px 12px;
+    border-radius:6px; box-shadow:inset 0 0 12px rgba(0,255,156,.05); }
+  .card .k{ font-size:11px; color:#5f7d70; letter-spacing:1px; }
+  .card .v{ font-size:20px; margin-top:4px; text-shadow:0 0 6px var(--neon); }
+  .bar{ height:6px; background:var(--dim); border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar > i{ display:block; height:100%; background:var(--neon); box-shadow:0 0 8px var(--neon); width:0; transition:width .4s; }
+  .svc{ margin-top:2px; }
+  .svc .row{ display:flex; justify-content:space-between; align-items:center;
+    padding:7px 4px; border-bottom:1px dashed var(--dim); font-size:14px; }
+  .dot{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:8px; }
+  .ONLINE{ color:var(--neon);} .ONLINE .dot{ background:var(--neon); box-shadow:0 0 8px var(--neon);}
+  .OFFLINE{ color:var(--red);} .OFFLINE .dot{ background:var(--red); box-shadow:0 0 8px var(--red);}
+  .DEGRADED,.UNCONFIGURED{ color:var(--amber);} .DEGRADED .dot,.UNCONFIGURED .dot{ background:var(--amber);}
+  .tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:auto; }
+  .tile{ border:1px solid var(--neon); border-radius:6px; text-align:center; padding:14px 0;
+    letter-spacing:2px; font-size:13px; text-shadow:0 0 6px var(--neon);
+    box-shadow:0 0 10px rgba(0,255,156,.15) inset; cursor:pointer; user-select:none; }
+  .tile:active{ background:var(--neon); color:#000; }
+  .foot{ font-size:10px; color:#3d5348; text-align:center; letter-spacing:1px; }
+  .off{ color:var(--red); }
+  /* MODAL STYLES */
+  .modal { display:none; position:fixed; inset:0; background:rgba(3,6,10,0.85); z-index:10; padding:20px; flex-direction:column; }
+  .modal.active { display:flex; }
+  .modal-box { border:1px solid var(--neon); background:var(--bg); flex:1; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(0,255,156,.2); }
+  .modal-hdr { display:flex; justify-content:space-between; padding:10px 15px; border-bottom:1px solid var(--dim); background:rgba(0,255,156,.05); }
+  .modal-hdr .close { cursor:pointer; color:var(--red); font-weight:bold; padding:0 5px; }
+  .modal-body { padding:15px; flex:1; overflow-y:auto; font-size:14px; white-space:pre-wrap; }
+  .terminal-input { background:transparent; border:none; border-top:1px solid var(--dim); color:var(--neon); padding:10px 15px; font-family:inherit; outline:none; width:100%; }
+  .gh-commit { border-bottom:1px dashed var(--dim); padding-bottom:8px; margin-bottom:8px; }
+  .gh-commit:last-child { border:none; margin:0; padding:0; }
+  .gh-author { color:var(--amber); }
+  .chat-msg { margin-bottom:10px; padding:8px 12px; border-radius:6px; max-width:85%; clear:both; }
+  .chat-user { background:rgba(0,255,156,.1); border:1px solid var(--neon); float:right; color:var(--neon); text-align:right; }
+  .chat-ai { background:rgba(255,180,84,.1); border:1px solid var(--amber); float:left; color:var(--amber); }
+  .proj-item { padding:10px; border:1px solid var(--dim); margin-bottom:10px; background:rgba(0,255,156,.02); }
+  .proj-title { font-weight:bold; color:var(--neon); margin-bottom:4px; font-size:16px; letter-spacing:1px; }
+  .proj-stat { float:right; font-size:12px; padding:2px 6px; border-radius:3px; background:var(--dim); }
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div class="wrap">
+  <div class="hdr"><h1 id="title">ROSHAN CYBERDECK</h1><span class="clock" id="clock">--:--:--</span></div>
+
+  <div class="panel">
+    <div class="card"><div class="k">CPU LOAD</div><div class="v" id="cpu">--%</div><div class="bar"><i id="cpubar"></i></div></div>
+    <div class="card"><div class="k">MEMORY</div><div class="v" id="mem">-- / --</div><div class="bar"><i id="membar"></i></div></div>
+    <div class="card"><div class="k">HOST BATTERY</div><div class="v" id="bat">--</div></div>
+    <div class="card"><div class="k">LINK</div><div class="v" id="link">USB ●</div></div>
+  </div>
+
+  <div class="svc" id="svc"></div>
+
+  <div class="tiles">
+    <div class="tile" onclick="openAI()">AI</div>
+    <div class="tile" onclick="openTerminal()">TERMINAL</div>
+    <div class="tile" onclick="openServers()">SERVERS</div>
+    <div class="tile" onclick="openProjects()">PROJECTS</div>
+    <div class="tile" onclick="openDeploy()">DEPLOY</div>
+    <div class="tile" onclick="openGithub()">GITHUB</div>
+  </div>
+
+  <div class="foot">CYBERDECK M8 v0.1 &nbsp;·&nbsp; tablet=interface / laptop=compute &nbsp;·&nbsp; <span id="lag">ws</span></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <div class="modal-hdr"><span id="m-title">MODAL</span><span class="close" onclick="closeModal()">[X]</span></div>
+    <div class="modal-body" id="m-body"></div>
+    <input type="text" class="terminal-input" id="m-input" style="display:none" placeholder="..." onkeydown="if(event.key==='Enter') handleInput()" autocomplete="off">
+  </div>
+</div>
+
+<script>
+// ---- matrix rain ----
+const cv=document.getElementById('matrix'),cx=cv.getContext('2d');
+function size(){cv.width=innerWidth;cv.height=innerHeight;}
+size(); addEventListener('resize',size);
+const cols=()=>Math.floor(cv.width/14); let drops=Array(cols()).fill(1);
+setInterval(()=>{cx.fillStyle='rgba(3,6,10,.08)';cx.fillRect(0,0,cv.width,cv.height);
+  cx.fillStyle='#00ff9c';cx.font='14px monospace';
+  drops.forEach((y,i)=>{const t=String.fromCharCode(0x30A0+Math.random()*96);
+    cx.fillText(t,i*14,y*14); if(y*14>cv.height&&Math.random()>.975)drops[i]=0; drops[i]++;});
+},60);
+
+// ---- live data ----
+const $=id=>document.getElementById(id);
+function render(d){
+  const s=d.system;
+  cachedServices = d.services;
+  $('cpu').textContent=s.cpu.toFixed(0)+'%'; $('cpubar').style.width=Math.min(s.cpu,100)+'%';
+  $('mem').textContent=s.mem_used_gb+' / '+s.mem_total_gb+'G'; $('membar').style.width=s.mem_pct+'%';
+  $('bat').textContent=s.battery==null?'AC':s.battery+'%'; $('clock').textContent=s.ts;
+  $('svc').innerHTML=d.services.map(v=>
+    `<div class="row ${v.status}"><span><span class="dot"></span>${v.name}</span><span>${v.status}</span></div>`).join('');
+}
+function connect(){
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${proto}//${location.host}/ws`);
+  const isUsb = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+  const linkLabel = isUsb ? 'USB ●' : 'LAN ●';
+  ws.onmessage=e=>render(JSON.parse(e.data));
+  ws.onopen=()=>{$('link').innerHTML=linkLabel;$('lag').textContent='ws:live';};
+  ws.onclose=()=>{$('link').innerHTML='<span class="off">DOWN ●</span>';$('lag').textContent='ws:reconnecting';setTimeout(connect,1500);};
+}
+connect();
+
+// ---- Modals ----
+let termWs = null;
+let currentMode = null;
+let cachedServices = [];
+function closeModal() {
+  $('modal').classList.remove('active');
+  if(termWs) { termWs.close(); termWs = null; }
+  currentMode = null;
+}
+function showModal(title, showInput, mode) {
+  $('m-title').textContent = title;
+  $('m-body').innerHTML = 'Loading...';
+  $('m-input').style.display = showInput ? 'block' : 'none';
+  $('m-input').value = '';
+  $('modal').classList.add('active');
+  currentMode = mode;
+  if(showInput) setTimeout(() => $('m-input').focus(), 100);
+}
+
+function handleInput() {
+  if(currentMode === 'terminal') sendCmd();
+  else if(currentMode === 'ai') sendAiPrompt();
+}
+
+async function openGithub() {
+  showModal('GITHUB : microsoft/terminal', false, 'github');
+  try {
+    const res = await fetch('/api/github');
+    const d = await res.json();
+    if(d.status === 'ok') {
+      $('m-body').innerHTML = d.data.map(c => 
+        `<div class="gh-commit"><span class="gh-author">${c.commit.author.name}</span>: ${c.commit.message}</div>`
+      ).join('');
+    } else {
+      $('m-body').textContent = 'Error: ' + d.message;
+    }
+  } catch(e) { $('m-body').textContent = String(e); }
+}
+
+async function openDeploy() {
+  showModal('DEPLOY SEQUENCE', false, 'deploy');
+  $('m-body').textContent = 'Initiating deploy...';
+  try {
+    const res = await fetch('/api/deploy', {method: 'POST'});
+    const d = await res.json();
+    $('m-body').textContent = d.output || (d.status==='error' ? d.message : 'No output');
+  } catch(e) { $('m-body').textContent = String(e); }
+}
+
+function openTerminal() {
+  showModal('REMOTE TERMINAL', true, 'terminal');
+  $('m-input').placeholder = 'Enter command...';
+  $('m-body').textContent = 'Connecting...';
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  termWs = new WebSocket(`${proto}//${location.host}/ws/terminal`);
+  termWs.onopen = () => { $('m-body').textContent = 'Connected.\n'; };
+  termWs.onmessage = e => { $('m-body').textContent += e.data + '\n'; $('m-body').scrollTop = $('m-body').scrollHeight; };
+  termWs.onclose = () => { $('m-body').textContent += '\n[Disconnected]'; };
+}
+function sendCmd() {
+  const i = $('m-input');
+  if(!i.value || !termWs || termWs.readyState !== 1) return;
+  $('m-body').textContent += `\n> ${i.value}\n`;
+  termWs.send(i.value);
+  i.value = '';
+}
+
+function openAI() {
+  showModal('AI LINK : OLLAMA LOCAL', true, 'ai');
+  $('m-input').placeholder = 'Ask AI...';
+  $('m-body').innerHTML = '<div class="chat-msg chat-ai">System ready. Enter prompt below.</div><div style="clear:both"></div>';
+}
+async function sendAiPrompt() {
+  const i = $('m-input');
+  const p = i.value.trim();
+  if(!p) return;
+  i.value = '';
+  const body = $('m-body');
+  body.innerHTML += `<div class="chat-msg chat-user">${p}</div><div style="clear:both"></div>`;
+  const thinkingId = 'thk_' + Date.now();
+  body.innerHTML += `<div class="chat-msg chat-ai" id="${thinkingId}">Thinking...</div><div style="clear:both"></div>`;
+  body.scrollTop = body.scrollHeight;
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({prompt: p})
+    });
+    const d = await res.json();
+    const el = document.getElementById(thinkingId);
+    if(el) {
+      el.textContent = d.status === 'ok' ? d.response : 'Error: ' + d.message;
+    }
+  } catch(e) {
+    const el = document.getElementById(thinkingId);
+    if(el) el.textContent = 'Network error: ' + String(e);
+  }
+  body.scrollTop = body.scrollHeight;
+}
+
+function openServers() {
+  showModal('CORE SERVICES DETAIL', false, 'servers');
+  // Use the cachedServices updated in render()
+  if(!cachedServices.length) {
+    $('m-body').textContent = 'No service data yet...';
+    return;
+  }
+  $('m-body').innerHTML = cachedServices.map(v => 
+    `<div class="proj-item">
+      <span class="proj-stat ${v.status}">${v.status}</span>
+      <div class="proj-title">${v.name}</div>
+      <div style="color:#aaa">${v.note || 'No notes'}</div>
+     </div>`
+  ).join('');
+}
+
+async function openProjects() {
+  showModal('ACTIVE PROJECTS', false, 'projects');
+  try {
+    const res = await fetch('/api/projects');
+    const d = await res.json();
+    if(d.status === 'ok') {
+      $('m-body').innerHTML = d.data.map(p => 
+        `<div class="proj-item">
+          <span class="proj-stat ${p.status === 'ACTIVE' || p.status === 'ONLINE' ? 'ONLINE' : 'DEGRADED'}">${p.status}</span>
+          <div class="proj-title">${p.name}</div>
+          <div style="color:#ccc">${p.desc}</div>
+         </div>`
+      ).join('');
+    } else {
+      $('m-body').textContent = 'Error: ' + d.message;
+    }
+  } catch(e) { $('m-body').textContent = String(e); }
+}
+</script>
+</body>
+</html>

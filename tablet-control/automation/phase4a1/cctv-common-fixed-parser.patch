@@ -1,0 +1,77 @@
+diff --git a/automation/phase4a1/cctv-common-fixed.installed.sh b/automation/phase4a1/cctv-common-fixed.installed.sh
+index e88269f..248d785 100644
+--- a/automation/phase4a1/cctv-common-fixed.installed.sh
++++ b/automation/phase4a1/cctv-common-fixed.installed.sh
+@@ -70,8 +70,29 @@ auth_curl_config_ready() {
+     [ "$(stat -c %a "$AUTH_CURL_CONFIG" 2>/dev/null)" = "600" ] || return 1
+     [ "$(stat -c %U "$AUTH_CURL_CONFIG" 2>/dev/null)" = "root" ] || return 1
+ }
++parse_http_probe_result() {
++    HTTP_CODE=""
++    HTTP_BYTES=""
++    HTTP_PROBE_STATE="invalid-probe"
++    HTTP_PROBE_PARSED=$(printf '%s' "$1" | awk -F '|' '
++        NR > 1 { exit 1 }
++        {
++            sub(/\r$/, "", $2)
++            if (NF != 2 || $1 !~ /^[0-9][0-9][0-9]$/ || $2 !~ /^[0-9]+$/) exit 1
++            print $1 "|" $2
++        }
++    ') || return 1
++    [ -n "$HTTP_PROBE_PARSED" ] || {
++        [ -n "$1" ] || HTTP_PROBE_STATE="empty-response"
++        return 1
++    }
++    HTTP_CODE=${HTTP_PROBE_PARSED%%\|*}
++    HTTP_BYTES=${HTTP_PROBE_PARSED#*\|}
++    HTTP_PROBE_STATE="valid"
++    return 0
++}
+ http_probe() {
+-    local result curl_rc code bytes
++    local result curl_rc parse_rc
+     if [ "$1" = "authenticated" ]; then
+         result=$(curl --config "$AUTH_CURL_CONFIG" --anyauth --connect-timeout 5 --max-time 8 -s -o /dev/null -w "%{http_code}|%{size_download}" "http://127.0.0.1:${PORT}/" 2>/dev/null)
+         curl_rc=$?
+@@ -79,11 +100,18 @@ http_probe() {
+         result=$(curl --connect-timeout 5 --max-time 8 -s -o /dev/null -w "%{http_code}|%{size_download}" "http://127.0.0.1:${PORT}/" 2>/dev/null)
+         curl_rc=$?
+     fi
+-    code=${result%%|*}
+-    bytes=${result#*|}
+     HTTP_CURL_EXIT="$curl_rc"
+-    HTTP_CODE="$code"
+-    HTTP_BYTES="$bytes"
++    HTTP_PROBE_STATE="unknown"
++    parse_http_probe_result "$result"
++    parse_rc=$?
++    if [ "$curl_rc" -ne 0 ]; then
++        case "$HTTP_CODE" in
++            [1-5][0-9][0-9]) HTTP_PROBE_STATE="response-completion-timeout" ;;
++            *) HTTP_PROBE_STATE="curl-failed" ;;
++        esac
++        return 1
++    fi
++    return "$parse_rc"
+ }
+ check_http_response() {
+     read_auth_mode || true
+@@ -93,9 +121,17 @@ check_http_response() {
+         http_probe unauthenticated
+     fi
+     if [ "$HTTP_CURL_EXIT" -ne 0 ]; then
+-        HTTP_HEALTH_STATE="partial-or-timeout"
++        case "$HTTP_PROBE_STATE" in
++            response-completion-timeout) HTTP_HEALTH_STATE="response-completion-timeout" ;;
++            *) HTTP_HEALTH_STATE="partial-or-timeout" ;;
++        esac
+         return 1
+     fi
++    case "$HTTP_PROBE_STATE" in
++        valid) ;;
++        empty-response) HTTP_HEALTH_STATE="empty-response"; return 1 ;;
++        *) HTTP_HEALTH_STATE="invalid-probe"; return 1 ;;
++    esac
+     case "$HTTP_CODE" in
+         200)
+             if [ "$AUTH_MODE" = "enabled" ] && ! auth_curl_config_ready; then

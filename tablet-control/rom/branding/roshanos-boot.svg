@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1280" viewBox="0 0 800 1280">
+  <defs>
+    <radialGradient id="background" cx="50%" cy="40%" r="72%">
+      <stop offset="0%" stop-color="#122033"/>
+      <stop offset="48%" stop-color="#080d16"/>
+      <stop offset="100%" stop-color="#030509"/>
+    </radialGradient>
+    <linearGradient id="cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#65e8ff"/>
+      <stop offset="52%" stop-color="#00a2ff"/>
+      <stop offset="100%" stop-color="#296cff"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="800" height="1280" fill="url(#background)"/>
+  <g opacity="0.14" stroke="#40c8ff" stroke-width="1">
+    <path d="M80 224H720M80 320H720M80 416H720M80 512H720M80 608H720M80 704H720M80 800H720M80 896H720M80 992H720"/>
+    <path d="M112 192V1024M208 192V1024M304 192V1024M400 192V1024M496 192V1024M592 192V1024M688 192V1024"/>
+  </g>
+
+  <g transform="translate(400 512)">
+    <circle r="172" fill="none" stroke="#0c2136" stroke-width="28"/>
+    <circle r="172" fill="none" stroke="url(#cyan)" stroke-width="7"
+            stroke-linecap="round" stroke-dasharray="620 460"
+            transform="rotate(-54)" filter="url(#glow)"/>
+    <circle r="132" fill="#08111e" stroke="#173c5d" stroke-width="2"/>
+    <path d="M-50-84H18C72-84 104-54 104-9C104 26 84 50 53 61L111 141H52L1 70H-1V141H-50ZM-1-35V22H13C40 22 54 12 54-7C54-26 40-35 13-35Z"
+          fill="url(#cyan)" filter="url(#glow)"/>
+  </g>
+
+  <text x="400" y="790" fill="#f4f8ff" text-anchor="middle"
+        font-family="Segoe UI, Arial, sans-serif" font-size="78" font-weight="700"
+        letter-spacing="2">RoshanOS</text>
+  <text x="400" y="842" fill="#79a8c8" text-anchor="middle"
+        font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="500"
+        letter-spacing="8">STARTING</text>
+
+  <g transform="translate(356 905)" fill="#00a2ff">
+    <circle cx="0" cy="0" r="6" opacity="0.38"/>
+    <circle cx="44" cy="0" r="6" opacity="0.68"/>
+    <circle cx="88" cy="0" r="6"/>
+  </g>
+</svg>

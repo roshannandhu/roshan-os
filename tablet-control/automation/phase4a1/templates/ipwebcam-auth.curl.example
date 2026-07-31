@@ -1,0 +1,3 @@
+# Root-owned curl configuration template. Keep this file mode 0600.
+# Replace both placeholders only through a separately approved local provisioning step.
+user = "USERNAME:PASSWORD"

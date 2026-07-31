@@ -1,0 +1,11 @@
+{
+  "title": "ROSHAN CYBERDECK",
+  "services": [
+    { "name": "GitHub",     "type": "http", "url": "https://api.github.com" },
+    { "name": "Cloudflare", "type": "http", "url": "https://1.1.1.1" },
+    { "name": "AWS EC2",    "type": "tcp",  "host": "", "port": 22, "note": "set host to your EC2 IP" },
+    { "name": "PostgreSQL", "type": "tcp",  "host": "", "port": 5432, "note": "set host to your DB" },
+    { "name": "Ollama",     "type": "http", "url": "http://127.0.0.1:11434" },
+    { "name": "SSH Tunnel", "type": "tcp",  "host": "127.0.0.1", "port": 22 }
+  ]
+}

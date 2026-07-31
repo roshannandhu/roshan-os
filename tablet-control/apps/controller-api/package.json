@@ -1,0 +1,29 @@
+{
+  "name": "@tablet-control/controller-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:readonly-live": "tsx src/phase2-readonly-check.ts",
+    "test:readonly-proxy": "tsx src/phase2-local-proxy-check.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/multipart": "^10.1.0",
+    "@fastify/rate-limit": "^10.2.1",
+    "@fastify/static": "^8.3.0",
+    "@fastify/websocket": "^11.1.0",
+    "@tablet-control/integration-contracts": "*",
+    "@tablet-control/shared-types": "*",
+    "fastify": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "tsx": "^4.19.3",
+    "vitest": "^3.0.5"
+  }
+}

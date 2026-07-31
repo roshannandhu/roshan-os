@@ -1,0 +1,232 @@
+{
+  "schema_version": 2,
+  "target_device": "Lenovo Tab M8 (TB-8505F)",
+  "target_gsi": "LineageOS 18.1 arm64_bvS (Android 11)",
+  "package_name": "com.tabletcontrol.companion",
+  "architecture_type": "SINGLE_PRIVILEGED_APK_PLUS_RESOURCE_ONLY_RRO",
+  "provisioning": {
+    "management_mode": "fully_managed_device",
+    "dpc_preinstalled": true,
+    "device_owner_component": "com.tabletcontrol.companion/.TabletDeviceAdminReceiver",
+    "device_owner_component_fully_qualified": "com.tabletcontrol.companion/com.tabletcontrol.companion.TabletDeviceAdminReceiver",
+    "qr_payload_template": "rom/provisioning/android-enterprise-qr-preinstalled-dpc.template.json",
+    "qr_entrypoint_proven_on_target_setupwizard": false,
+    "entrypoint": "preinstalled_trusted_source_home_bridge",
+    "trusted_source_action": "android.app.action.PROVISION_MANAGED_DEVICE_FROM_TRUSTED_SOURCE",
+    "trusted_source_permission": "android.permission.DISPATCH_PROVISIONING_MESSAGE",
+    "preserves_android_consent": true,
+    "setup_completion_owner": "org.lineageos.setupwizard/.SetupWizardActivity",
+    "self_assigns_device_owner": false,
+    "requires_unprovisioned_device": true
+  },
+  "components": [
+    {
+      "name": "RoshanCore",
+      "package": "com.tabletcontrol.companion",
+      "target_location": "/system/priv-app/RoshanCore/RoshanCore.apk",
+      "source_apk": "apps/tablet-agent/app/build/outputs/apk/release/app-release.apk",
+      "contains": [
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.MainActivity",
+          "role": "Protected owner maintenance screen (intra-app only)",
+          "enabled": true,
+          "exported": false,
+          "exclude_from_recents": true,
+          "app_drawer_entry": false
+        },
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.KioskActivity",
+          "role": "RoshanLauncher (persistent post-enrollment HOME entry point)",
+          "exported": true,
+          "exclude_from_recents": true,
+          "intent_actions": ["android.intent.action.MAIN"],
+          "intent_categories": ["android.intent.category.HOME", "android.intent.category.DEFAULT"],
+          "app_drawer_entry": false
+        },
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.RoshanSetupActivity",
+          "role": "Factory-reset HOME and Android Managed Provisioning trusted-source bridge",
+          "enabled": true,
+          "exported": true,
+          "exclude_from_recents": true,
+          "intent_priority": 10,
+          "intent_actions": ["android.intent.action.MAIN"],
+          "intent_categories": ["android.intent.category.HOME", "android.intent.category.DEFAULT"],
+          "disabled_after_device_owner": true,
+          "app_drawer_entry": false
+        },
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.GetProvisioningModeActivity",
+          "role": "Android Enterprise fully-managed provisioning mode selector",
+          "exported": true,
+          "exclude_from_recents": true,
+          "no_history": true,
+          "permission": "android.permission.BIND_DEVICE_ADMIN",
+          "theme": "@android:style/Theme.NoDisplay",
+          "intent_actions": ["android.app.action.GET_PROVISIONING_MODE"],
+          "intent_categories": ["android.intent.category.DEFAULT"],
+          "app_drawer_entry": false
+        },
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.PolicyComplianceActivity",
+          "role": "Android Enterprise policy compliance callback",
+          "exported": true,
+          "exclude_from_recents": true,
+          "no_history": true,
+          "permission": "android.permission.BIND_DEVICE_ADMIN",
+          "theme": "@android:style/Theme.NoDisplay",
+          "intent_actions": ["android.app.action.ADMIN_POLICY_COMPLIANCE"],
+          "intent_categories": ["android.intent.category.DEFAULT"],
+          "app_drawer_entry": false
+        },
+        {
+          "type": "activity",
+          "class": "com.tabletcontrol.companion.ProvisioningSuccessfulActivity",
+          "role": "Legacy Android Enterprise provisioning success callback",
+          "exported": true,
+          "exclude_from_recents": true,
+          "no_history": true,
+          "permission": "android.permission.BIND_DEVICE_ADMIN",
+          "theme": "@android:style/Theme.NoDisplay",
+          "intent_actions": ["android.app.action.PROVISIONING_SUCCESSFUL"],
+          "intent_categories": ["android.intent.category.DEFAULT"],
+          "app_drawer_entry": false
+        },
+        {
+          "type": "service",
+          "class": "com.tabletcontrol.companion.CompanionService",
+          "role": "RoshanCore supervisor",
+          "exported": false,
+          "direct_boot_aware": true,
+          "foreground_service_type": "dataSync|location"
+        },
+        {
+          "type": "service",
+          "class": "com.tabletcontrol.companion.CameraService",
+          "role": "Roshan media service",
+          "exported": false,
+          "foreground_service_type": "camera|microphone"
+        },
+        {
+          "type": "receiver",
+          "class": "com.tabletcontrol.companion.BootReceiver",
+          "role": "Boot and package-replacement coordinator",
+          "enabled": true,
+          "exported": true,
+          "direct_boot_aware": true,
+          "intent_actions": [
+            "android.intent.action.LOCKED_BOOT_COMPLETED",
+            "android.intent.action.BOOT_COMPLETED",
+            "android.intent.action.USER_UNLOCKED",
+            "android.intent.action.MY_PACKAGE_REPLACED"
+          ],
+          "intent_categories": ["android.intent.category.DEFAULT"]
+        },
+        {
+          "type": "receiver",
+          "class": "com.tabletcontrol.companion.UpdateResultReceiver",
+          "role": "Explicit PackageInstaller and owner rollback result callback",
+          "enabled": true,
+          "exported": false,
+          "intent_actions": []
+        },
+        {
+          "type": "receiver",
+          "class": "com.tabletcontrol.companion.TabletDeviceAdminReceiver",
+          "role": "Device Policy Controller receiver",
+          "exported": true,
+          "permission": "android.permission.BIND_DEVICE_ADMIN",
+          "metadata": {
+            "android.app.device_admin": "@xml/device_admin_receiver"
+          },
+          "intent_actions": [
+            "android.app.action.DEVICE_ADMIN_ENABLED",
+            "android.app.action.PROFILE_PROVISIONING_COMPLETE"
+          ]
+        }
+      ],
+      "priv_app": true
+    }
+  ],
+  "optional_factory_reset_packages": [
+    {
+      "name": "Tailscale",
+      "package": "com.tailscale.ipn",
+      "cli_option": "--tailscale-apk",
+      "artifact_source": "caller_supplied_only",
+      "target_location": "/system/app/RoshanTailscale/Tailscale.apk",
+      "priv_app": false,
+      "copy_policy": "byte_for_byte_unchanged",
+      "when_omitted": "degraded_factory_reset_persistence"
+    },
+    {
+      "name": "IP Webcam",
+      "package": "com.pas.webcam",
+      "cli_option": "--ip-webcam-apk",
+      "artifact_source": "caller_supplied_only",
+      "target_location": "/system/app/RoshanIpWebcam/IPWebcam.apk",
+      "priv_app": false,
+      "copy_policy": "byte_for_byte_unchanged",
+      "when_omitted": "degraded_factory_reset_persistence"
+    }
+  ],
+  "branding_files": [
+    {
+      "source": "rom/staging/system/media/bootanimation.zip",
+      "editable_source": "rom/branding/roshanos-boot.svg",
+      "build_script": "rom/scripts/build-bootanimation.ps1",
+      "target": "/system/media/bootanimation.zip",
+      "mode": "0644",
+      "format": "android_bootanimation_zip_stored"
+    }
+  ],
+  "configuration_files": [
+    {
+      "source": "rom/staging/system/etc/permissions/privapp-permissions-roshan.xml",
+      "target": "/system/etc/permissions/privapp-permissions-roshan.xml",
+      "mode": "0644"
+    },
+    {
+      "source": "rom/staging/system/etc/sysconfig/roshan-sysconfig.xml",
+      "target": "/system/etc/sysconfig/roshan-sysconfig.xml",
+      "mode": "0644"
+    }
+  ],
+  "permissions_allowlist": [
+    "android.permission.CHANGE_COMPONENT_ENABLED_STATE",
+    "android.permission.DISPATCH_PROVISIONING_MESSAGE",
+    "android.permission.INSTALL_SELF_UPDATES",
+    "android.permission.MANAGE_ROLLBACKS"
+  ],
+  "resource_overlays": [
+    {
+      "package": "com.tabletcontrol.roshanos.setupwizard.overlay",
+      "target_package": "org.lineageos.setupwizard",
+      "source": "rom/branding/setupwizard-overlay",
+      "build_script": "rom/scripts/build-setupwizard-overlay.ps1",
+      "built_apk": "rom/build/RoshanSetupWizardOverlay.apk",
+      "target": "/system/product/overlay/RoshanSetupWizardOverlay/RoshanSetupWizardOverlay.apk",
+      "resource_only": true,
+      "static": true,
+      "priority": 10,
+      "mode": "0644"
+    }
+  ],
+  "self_update_policy": {
+    "target_package": "com.tabletcontrol.companion",
+    "installer": "android.content.pm.PackageInstaller",
+    "silent_permission": "android.permission.INSTALL_SELF_UPDATES",
+    "generic_install_packages_permission": false,
+    "controller_origin": "owner_provisioned_encrypted_exact_tailscale_https_origin",
+    "redirects_allowed": false,
+    "rollback_permission": "android.permission.MANAGE_ROLLBACKS",
+    "rollback_data_policy": "retain",
+    "hidden_api_whitelisted_for_android_11_rollback": true,
+    "automatic_boot_failure_rollback_guaranteed": false
+  }
+}

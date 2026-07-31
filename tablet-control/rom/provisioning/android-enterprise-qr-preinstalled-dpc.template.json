@@ -1,0 +1,3 @@
+{
+  "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.tabletcontrol.companion/.TabletDeviceAdminReceiver"
+}

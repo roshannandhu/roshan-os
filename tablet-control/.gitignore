@@ -1,0 +1,43 @@
+# Dependencies and build products
+node_modules/
+dist/
+build/
+coverage/
+.gradle/
+**/build/
+*.apk
+*.aab
+*.tsbuildinfo
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+.local/
+*.keystore
+*.jks
+*.p12
+*.pem
+
+# IDE and OS files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Generated evidence; retain only reviewed redacted reports
+test-results/raw/
+
+# Logs, scratch, and temporary diagnostic dumps
+*.log
+logcat*.txt
+scratch/
+window_dump.xml
+apps/controller-web/dev-dist/
+
+
+# Diagnostic logs
+*.txt
+*.xml
+scratch/

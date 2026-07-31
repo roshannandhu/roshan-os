@@ -1,0 +1,60 @@
+; mtk_fastboot.inf
+; WinUSB driver for Lenovo TB-8505F (MediaTek MT6761) in Fastboot mode
+; Corrects DeviceInterfaceGUID to {F72FE0D4-CBCB-407D-8814-9ED673D0DD6B}
+; so that AdbWinApi.dll (used by fastboot.exe) can enumerate the device.
+;
+; Root cause: fastboot.exe passes {F72FE0D4...} to AdbEnumInterfaces().
+; libwdi (oem28.inf) had set {1340F924...} — wrong GUID, device invisible to fastboot.
+
+[Strings]
+DeviceName  = "Android Fastboot (Lenovo TB-8505F)"
+VendorName  = "MediaTek Inc."
+DeviceID    = "VID_0E8D&PID_201C"
+DeviceGUID  = "{F72FE0D4-CBCB-407D-8814-9ED673D0DD6B}"
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = "USBDevice"
+ClassGuid   = {88bae032-5a81-49f0-bc3d-a4ff138216d6}
+Provider    = "fastboot-fix"
+DriverVer   = 07/20/2026,1.0.0.0
+
+[ClassInstall32]
+AddReg = WinUSBDeviceClassReg
+
+[WinUSBDeviceClassReg]
+HKR,,,0,"Universal Serial Bus devices"
+HKR,,Icon,,-20
+
+[Manufacturer]
+%VendorName% = Device_WinUSB,NTamd64
+
+[Device_WinUSB.NTamd64]
+%DeviceName% = USB_Install, USB\%DeviceID%
+
+[USB_Install]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[USB_Install.Services]
+Include    = winusb.inf
+AddService = WinUSB,0x00000002,WinUSB_ServiceInstall
+
+[WinUSB_ServiceInstall]
+DisplayName   = "WinUSB"
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %12%\WinUSB.sys
+
+[USB_Install.Wdf]
+KmdfService = WINUSB, WinUsb_Install
+
+[WinUsb_Install]
+KmdfLibraryVersion = 1.15
+
+[USB_Install.HW]
+AddReg = AddDeviceInterfaceGUID
+
+[AddDeviceInterfaceGUID]
+HKR,,DeviceInterfaceGUIDs,0x10000,%DeviceGUID%

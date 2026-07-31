@@ -1,0 +1,62 @@
+--- cctv-common-fixed.sh (installed baseline)
++++ cctv-common-fixed.sh (proposed Phase 4A.1)
+@@
+ CCTV_BOOT_PENDING="$CCTV_DIR/boot.pending"
++AUTH_MODE_FILE="/data/adb/cctv/ipwebcam-health.mode"
++AUTH_CURL_CONFIG="/data/adb/cctv/ipwebcam-auth.curl"
++HTTP_HEALTH_STATE="unknown"
+ IP_WEBCAM_PKG="com.pas.webcam"
+@@
+-check_http_response() {
+-    local code
+-    code=$(curl --connect-timeout 5 --max-time 8 -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/" 2>/dev/null)
+-    case "$code" in
+-        200|401) return 0 ;;
+-        *) return 1 ;;
+-    esac
+-}
++read_auth_mode() {
++    AUTH_MODE="disabled"
++    [ -e "$AUTH_MODE_FILE" ] || return 0
++    [ -f "$AUTH_MODE_FILE" ] || { AUTH_MODE="invalid"; return 1; }
++    IFS= read -r mode < "$AUTH_MODE_FILE" || { AUTH_MODE="invalid"; return 1; }
++    case "$mode" in disabled|enabled) AUTH_MODE="$mode"; return 0 ;; *) AUTH_MODE="invalid"; return 1 ;; esac
++}
++auth_curl_config_ready() {
++    [ -s "$AUTH_CURL_CONFIG" ] || return 1
++    [ "$(stat -c %a "$AUTH_CURL_CONFIG" 2>/dev/null)" = "600" ] || return 1
++    [ "$(stat -c %U "$AUTH_CURL_CONFIG" 2>/dev/null)" = "root" ] || return 1
++}
++http_probe() {
++    local result curl_rc code bytes
++    if [ "$1" = "authenticated" ]; then
++        result=$(curl --config "$AUTH_CURL_CONFIG" --anyauth --connect-timeout 5 --max-time 8 -s -o /dev/null -w "%{http_code}|%{size_download}" "http://127.0.0.1:${PORT}/" 2>/dev/null); curl_rc=$?
++    else
++        result=$(curl --connect-timeout 5 --max-time 8 -s -o /dev/null -w "%{http_code}|%{size_download}" "http://127.0.0.1:${PORT}/" 2>/dev/null); curl_rc=$?
++    fi
++    code=${result%%|*}; bytes=${result#*|}
++    HTTP_CURL_EXIT="$curl_rc"; HTTP_CODE="$code"; HTTP_BYTES="$bytes"
++}
++check_http_response() {
++    read_auth_mode || true
++    if [ "$AUTH_MODE" = "enabled" ] && auth_curl_config_ready; then
++        http_probe authenticated
++    else
++        http_probe unauthenticated
++    fi
++    if [ "$HTTP_CURL_EXIT" -ne 0 ]; then HTTP_HEALTH_STATE="partial-or-timeout"; return 1; fi
++    case "$HTTP_CODE" in
++        200)
++            if [ "$AUTH_MODE" = "enabled" ] && ! auth_curl_config_ready; then HTTP_HEALTH_STATE="auth-config-missing-or-invalid"; else HTTP_HEALTH_STATE="healthy"; fi
++            return 0 ;;
++        401)
++            if [ "$AUTH_MODE" = "enabled" ]; then
++                if auth_curl_config_ready; then HTTP_HEALTH_STATE="auth-invalid"; else HTTP_HEALTH_STATE="auth-config-missing-or-invalid"; fi
++            else HTTP_HEALTH_STATE="auth-required-while-disabled"; fi
++            return 0 ;;
++        *) HTTP_HEALTH_STATE="http-unhealthy"; return 1 ;;
++    esac
++}
+@@
+-                    http_n=$((http_n + 1)); log "  t=${waited}s: HTTP OK (n=${http_n})"
++                    http_n=$((http_n + 1)); log "  t=${waited}s: HTTP ${HTTP_HEALTH_STATE} (n=${http_n})"
